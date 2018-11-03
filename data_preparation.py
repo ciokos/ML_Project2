@@ -7,10 +7,9 @@ datasetpath = "Bike-Sharing-Dataset"
 file = open(datasetpath + "/day.csv")
 daydata = csv.reader(file, delimiter=',')
 
-
+next(daydata)
 X = []
-for row in daydata:
-    X.append(row[2:])
+for row in daydata:    X.append(row[2:])
 
 X = np.array(X)
 
