@@ -1,6 +1,6 @@
-from sklearn import tree
-from sklearn import model_selection
 import matplotlib.pyplot as plt
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn import model_selection
 
 # requires data from exercise 5.1.1
 from data_preparation import *
@@ -22,12 +22,13 @@ K2 = 5
 CV2 = model_selection.KFold(K2, shuffle=True)
 
 # Parameter values
-MAX_SPLITS = 120
-min_tree_splits = range(2, MAX_SPLITS + 1)
+max_neighbours = 120
+neighbours = range(1, max_neighbours + 1)
 
 # errors grabber
 Error_test = []
-Error_val = np.empty((len(min_tree_splits), K2))
+Error_val = np.empty((len(neighbours), K2))
+
 
 k = 0
 # Outer loop
@@ -49,10 +50,10 @@ for par_index, test_index in CV1.split(XD, y):
         y_val = y_par[val_index]
 
         m_idx = 0
-        for s in min_tree_splits:
-            dtc = tree.DecisionTreeClassifier(criterion='gini', min_samples_split=s)
-            dtc = dtc.fit(X_train, y_train)
-            classes = dtc.predict(X_val)
+        for n in neighbours:
+            knc = KNeighborsClassifier(n_neighbors=n)
+            knc = knc.fit(X_train, y_train)
+            classes = knc.predict(X_val)
             error = classes.astype(int) - y_val.astype(int)
             errors = np.count_nonzero(error)
             Error_val[m_idx, k2] = errors
@@ -64,20 +65,20 @@ for par_index, test_index in CV1.split(XD, y):
     # calculate averages and choose model
     averages = np.mean(Error_val, axis=1)
     idx = np.argmin(averages)
-    chosen_split = min_tree_splits[idx]
-    print('chosen parameter: {0}'.format(chosen_split))
+    chosen_n = neighbours[idx]
+    print('chosen parameter: {0}'.format(chosen_n))
 
     # train model on outer split
-    dtc = tree.DecisionTreeClassifier(criterion='gini', min_samples_split=chosen_split)
-    dtc = dtc.fit(X_par, y_par)
-    classes = dtc.predict(X_test)
+    knc = KNeighborsClassifier(n_neighbors=chosen_n)
+    knc = knc.fit(X_par, y_par)
+    classes = knc.predict(X_test)
     error = classes.astype(int) - y_test.astype(int)
     errors = np.count_nonzero(error)
     print('Error: {0} %'.format(errors * 100 / error.shape[0]))
 
     averages = averages * 100 / Error_val.shape[0]
-    plt.plot(min_tree_splits, averages, alpha=0.5, linewidth=2.2)
-    plt.plot(chosen_split, np.min(averages), 'kx')
+    plt.plot(neighbours, averages, alpha=0.5, linewidth=2.2)
+    plt.plot(chosen_n, np.min(averages), 'kx')
 
     # save error
     Error_test.append(errors * 100 / error.shape[0])
