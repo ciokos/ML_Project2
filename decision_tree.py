@@ -1,6 +1,4 @@
-import numpy as np
 from sklearn import tree
-import graphviz
 from sklearn import model_selection
 import matplotlib.pyplot as plt
 
@@ -20,7 +18,7 @@ K1 = 4
 CV1 = model_selection.KFold(K1, shuffle=True)
 
 # Cross validation inner loop split
-K2 = 3
+K2 = 5
 CV2 = model_selection.KFold(K2, shuffle=True)
 
 # Parameter values
@@ -56,7 +54,7 @@ for par_index, test_index in CV1.split(XD, y):
 
         m_idx = 0
         for s in min_tree_splits:
-            dtc = tree.DecisionTreeClassifier(criterion='entropy', min_samples_split=s)
+            dtc = tree.DecisionTreeClassifier(criterion='gini', min_samples_split=s)
             dtc = dtc.fit(X_train, y_train)
             classes = dtc.predict(X_val)
             error = classes.astype(int) - y_val.astype(int)
@@ -83,6 +81,7 @@ for par_index, test_index in CV1.split(XD, y):
 
     averages = averages * 100 / error.shape[0]
     plt.plot(min_tree_splits, averages, alpha=0.6, linewidth=2.0)
+    plt.plot(chosen_split, np.min(averages), 'kx')
 
     # save error
     Error_test.append(errors * 100 / error.shape[0])
