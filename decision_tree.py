@@ -2,7 +2,6 @@ from sklearn import tree
 from sklearn import model_selection
 import matplotlib.pyplot as plt
 
-# requires data from exercise 5.1.1
 from data_preparation import *
 
 class_names = ['winter', 'spring', 'summer', 'fall']
@@ -52,10 +51,8 @@ for par_index, test_index in CV1.split(XD, y):
         for s in min_tree_splits:
             dtc = tree.DecisionTreeClassifier(criterion='gini', min_samples_split=s)
             dtc = dtc.fit(X_train, y_train)
-            classes = dtc.predict(X_val)
-            error = classes.astype(int) - y_val.astype(int)
-            errors = np.count_nonzero(error)
-            Error_val[m_idx, k2] = errors
+            score = dtc.score(X_val, y_val)
+            Error_val[m_idx, k2] = 1-score
             m_idx = m_idx + 1
             # print('errors for minimum tree split {0}: {1}'.format(s, errors))
 
@@ -63,6 +60,7 @@ for par_index, test_index in CV1.split(XD, y):
 
     # calculate averages and choose model
     averages = np.mean(Error_val, axis=1)
+    averages = averages * 100
     idx = np.argmin(averages)
     chosen_split = min_tree_splits[idx]
     print('chosen parameter: {0}'.format(chosen_split))
@@ -70,17 +68,14 @@ for par_index, test_index in CV1.split(XD, y):
     # train model on outer split
     dtc = tree.DecisionTreeClassifier(criterion='gini', min_samples_split=chosen_split)
     dtc = dtc.fit(X_par, y_par)
-    classes = dtc.predict(X_test)
-    error = classes.astype(int) - y_test.astype(int)
-    errors = np.count_nonzero(error)
-    print('Error: {0} %'.format(errors * 100 / error.shape[0]))
+    error = 1-dtc.score(X_test, y_test)
+    print('Error: {0} %'.format(error * 100))
 
-    averages = averages * 100 / Error_val.shape[0]
     plt.plot(min_tree_splits, averages, alpha=0.5, linewidth=2.2)
     plt.plot(chosen_split, np.min(averages), 'kx')
 
     # save error
-    Error_test.append(errors * 100 / error.shape[0])
+    Error_test.append(error * 100)
 
     k = k + 1
 

@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
-from sklearn.neighbors import KNeighborsClassifier
 from sklearn import model_selection
+import neurolab as nl
 
 from data_preparation import *
 
@@ -9,6 +9,8 @@ attributeNames = ['weather', 'temperature', 'humidity', 'wind speed', 'bikes']
 
 y = XD[:, 0]
 XD = np.delete(XD, 0, 1)
+enc = OneHotEncoder(sparse=False, categorical_features=[0])
+XD = enc.fit_transform(XD)
 
 N, M = XD.shape
 
@@ -21,13 +23,14 @@ K2 = 5
 CV2 = model_selection.KFold(K2, shuffle=True)
 
 # Parameter values
-max_neighbours = 120
-neighbours = range(1, max_neighbours + 1)
+max_nodes = 4
+hidden_nodes = range(2, max_nodes + 1)
+learning_goal = 2.0  # stop criterion 1 (train mse to be reached)
+max_epochs = 10  # stop criterion 2 (max epochs in training)
 
 # errors grabber
 Error_test = []
-Error_val = np.empty((len(neighbours), K2))
-
+Error_val = np.empty((len(hidden_nodes), K2))
 
 k = 0
 # Outer loop
@@ -49,11 +52,18 @@ for par_index, test_index in CV1.split(XD, y):
         y_val = y_par[val_index]
 
         m_idx = 0
-        for n in neighbours:
-            knc = KNeighborsClassifier(n_neighbors=n)
-            knc = knc.fit(X_train, y_train)
-            score = knc.score(X_val, y_val)
-            Error_val[m_idx, k2] = 1 - score
+        for n in hidden_nodes:
+            ann = nl.net.newff([[0, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 8714]], [n, 1],
+                               [nl.trans.TanSig(), nl.trans.PureLin()])
+
+            train_error = ann.train(X_train, y_train.reshape(-1, 1), goal=learning_goal, epochs=max_epochs)
+
+            y_est = ann.sim(X_val).squeeze()
+            y_est = (y_est > .5).astype(int)
+
+            error = (y_est != y_val.astype(int)).sum().astype(float) / y_val.shape[0]
+
+            Error_val[m_idx, k2] = error
             m_idx = m_idx + 1
             # print('errors for minimum tree split {0}: {1}'.format(s, errors))
 
@@ -63,16 +73,22 @@ for par_index, test_index in CV1.split(XD, y):
     averages = np.mean(Error_val, axis=1)
     averages = averages * 100
     idx = np.argmin(averages)
-    chosen_n = neighbours[idx]
+    chosen_n = hidden_nodes[idx]
     print('chosen parameter: {0}'.format(chosen_n))
 
     # train model on outer split
-    knc = KNeighborsClassifier(n_neighbors=chosen_n)
-    knc = knc.fit(X_par, y_par)
-    error = 1 - knc.score(X_test, y_test)
+    ann = nl.net.newff([[0, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 1], [0, 8714]], [chosen_n, 1],
+                       [nl.trans.TanSig(), nl.trans.PureLin()])
+
+    train_error = ann.train(X_par, y_par.reshape(-1, 1), goal=learning_goal, epochs=max_epochs)
+
+    y_est = ann.sim(X_test).squeeze()
+    y_est = (y_est > .5).astype(int)
+
+    error = (y_est != y_test.astype(int)).sum().astype(float) / y_test.shape[0]
     print('Error: {0} %'.format(error * 100))
 
-    plt.plot(neighbours, averages, alpha=0.5, linewidth=2.2)
+    plt.plot(hidden_nodes, averages, alpha=0.5, linewidth=2.2)
     plt.plot(chosen_n, np.min(averages), 'kx')
 
     # save error
