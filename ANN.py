@@ -7,21 +7,21 @@ from scipy import stats
 from data_preparation import *
 
 y = X[:, 11]
-X = X[:, 1:11]
+X = X[:, :-1]
 N, M = X.shape
 
 # Normalize data
 X = stats.zscore(X);
 
 # Parameters for neural network classifier
-n_hidden_units = 5  # number of hidden units
+n_hidden_units = 8  # number of hidden units
 n_train = 2  # number of networks trained in each k-fold
-learning_goal = 100  # stop criterion 1 (train mse to be reached)
-max_epochs = 64  # stop criterion 2 (max epochs in training)
-show_error_freq = 5  # frequency of training status updates
+learning_goal = 1000  # stop criterion 1 (train mse to be reached)
+max_epochs = 200  # stop criterion 2 (max epochs in training)
+show_error_freq = 10  # frequency of training status updates
 
 # K-fold crossvalidation
-K = 2  # only three folds to speed up this example
+K = 5  # only three folds to speed up this example
 CV = model_selection.KFold(K, shuffle=True)
 
 # Variable for classification error
@@ -42,7 +42,7 @@ for train_index, test_index in CV.split(X, y):
     for i in range(n_train):
         print('Training network {0}/{1}...'.format(i + 1, n_train))
         # Create randomly initialized network with 2 layers
-        ann = nl.net.newff([[-3, 3]] * M, [n_hidden_units, 1], [nl.trans.TanSig(), nl.trans.PureLin()])
+        ann = nl.net.newff([[0, 1]] * M, [n_hidden_units, 1], [nl.trans.TanSig(), nl.trans.PureLin()])
         if i == 0:
             bestnet.append(ann)
         # train network
