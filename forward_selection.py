@@ -11,29 +11,29 @@ attribute_names = attribute_names[:-1]
 
 textout = ''
 internal_cross_validation = 730
-selected_features, features_record, loss_record = feature_selector_lr(X, y, internal_cross_validation, display=textout)
-
+# selected_features, features_record, loss_record = feature_selector_lr(X, y, internal_cross_validation, display=textout)
+#
 # selected_features = [0,  2,  3,  6,  8,  9, 10]
 
-selected_features = [ 0,  1,  3,  4,  5,  6,  8,  9, 10]
+selected_features = [0,  1,  3,  4,  5,  6,  8,  9, 10]
 
 #
-# fsX = X[:, selected_features]
+fsX = X[:, selected_features]
 # # print(fsX[0])
 #
-# model = lm.LinearRegression(fit_intercept=True)
-# model.fit(fsX, y)
+model = lm.LinearRegression(fit_intercept=True)
+model.fit(fsX, y)
 # # model_features = ['spring', 'fall', 'winter', 'rainy',  'temp', 'hum', 'windspeed']
 #
-#
+print(model.coef_)
 # # x = fsX[0].reshape(-1,1)
 # # print(model.predict(x))
 # pred = model.predict(fsX)
 #
-# attribute_names = np.array(attribute_names)
+attribute_names = np.array(attribute_names)
 #
 # print(np.sqrt((np.square(y-pred)).sum()/len(y)))
-# print(attribute_names[selected_features])
+print(attribute_names[selected_features])
 # print(selected_features)
 # figure()
 # subplot(1,2,1)
